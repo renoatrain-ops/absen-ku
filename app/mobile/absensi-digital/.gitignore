@@ -1,0 +1,14 @@
+# Flutter gitignore
+
+.idea/
+.vscode/
+.packages
+.pub/
+/build/
+**/ios/Flutter/.last_build_id
+**/flutter_export_environment.sh
+**/android/local.properties
+*.iml
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
