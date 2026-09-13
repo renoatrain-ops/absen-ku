@@ -1,0 +1,85 @@
+import 'package:flutter/material.dart';
+import '../data/database.dart';
+import '../models/absensi.dart';
+import 'package:intl/intl.dart';
+
+class HistoryPage extends StatefulWidget {
+  const HistoryPage({super.key});
+
+  @override
+  State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage> {
+  DateTime _selectedDate = DateTime.now();
+  List<Absensi> _items = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() => _loading = true);
+    final rows = await DatabaseHelper.instance.getAbsensiByDate(_selectedDate);
+    setState(() {
+      _items = rows.map((r) => Absensi.fromMap(r)).toList();
+      _loading = false;
+    });
+  }
+
+  Future<void> _pickDate() async {
+    final d = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+    );
+    if (d != null) {
+      setState(() => _selectedDate = d);
+      await _load();
+    }
+  }
+
+  Future<void> _delete(int id) async {
+    await DatabaseHelper.instance.deleteAbsensi(id);
+    await _load();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final label = DateFormat('yyyy-MM-dd').format(_selectedDate);
+    return Scaffold(
+      appBar: AppBar(title: const Text('History Absensi')),
+      body: Column(
+        children: [
+          ListTile(
+            title: const Text('Tanggal'),
+            subtitle: Text(label),
+            trailing: IconButton(icon: const Icon(Icons.calendar_today), onPressed: _pickDate),
+          ),
+          const Divider(),
+          _loading
+              ? const Center(child: CircularProgressIndicator())
+              : Expanded(
+                  child: _items.isEmpty
+                      ? const Center(child: Text('Belum ada absensi untuk tanggal ini.'))
+                      : ListView.builder(
+                          itemCount: _items.length,
+                          itemBuilder: (_, i) {
+                            final a = _items[i];
+                            return ListTile(
+                              title: Text(a.kodePihak),
+                              subtitle: Text(DateFormat('HH:mm:ss').format(a.tglHadir)),
+                              trailing: IconButton(icon: const Icon(Icons.delete), onPressed: () => _delete(a.idAbsensi!)),
+                            );
+                          },
+                        ),
+                ),
+        ],
+      ),
+    );
+  }
+}

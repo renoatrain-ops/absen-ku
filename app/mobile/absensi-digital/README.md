@@ -1,1 +1,1 @@
-Update README: Added Report generation page for PDF/CSV/JSON and instructions to share via WhatsApp.
+Update README: added History and Manajemen Pihak pages, PDF preview, and WhatsApp quick-open helper (note: direct auto-send to group may require user action).

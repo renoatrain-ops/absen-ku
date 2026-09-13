@@ -92,6 +92,37 @@ class DatabaseHelper {
     return await db.query('absensi', orderBy: 'tgl_hadir DESC');
   }
 
+  Future<List<Map<String, dynamic>>> getAbsensiByDate(DateTime date) async {
+    final db = await instance.database;
+    final dateStr = date.toIso8601String().substring(0, 10); // yyyy-MM-dd
+    return await db.query('absensi', where: "tgl_hadir LIKE ?", whereArgs: ['$dateStr%'], orderBy: 'tgl_hadir DESC');
+  }
+
+  Future<List<Map<String, dynamic>>> getAllPihak() async {
+    final db = await instance.database;
+    return await db.query('pihak', orderBy: 'nama_alias');
+  }
+
+  Future<int> insertPihak(Map<String, dynamic> pihak) async {
+    final db = await instance.database;
+    return await db.insert('pihak', pihak);
+  }
+
+  Future<int> updatePihak(int idPihak, Map<String, dynamic> pihak) async {
+    final db = await instance.database;
+    return await db.update('pihak', pihak, where: 'id_pihak = ?', whereArgs: [idPihak]);
+  }
+
+  Future<int> deletePihak(int idPihak) async {
+    final db = await instance.database;
+    return await db.delete('pihak', where: 'id_pihak = ?', whereArgs: [idPihak]);
+  }
+
+  Future<int> deleteAbsensi(int idAbsensi) async {
+    final db = await instance.database;
+    return await db.delete('absensi', where: 'id_absensi = ?', whereArgs: [idAbsensi]);
+  }
+
   Future close() async {
     final db = await instance.database;
     db.close();

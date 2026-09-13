@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -64,7 +65,7 @@ class ReportService {
       ));
     }
 
-    // Include unknown hadir (kode yang ada di absensi tapi tidak di pihak)
+    // Include unknown hadir (kode that in absensi but not in pihak)
     for (final kode in hadirMap.keys) {
       final found = allPihakRows.any((p) => (p['kode_pihak'] as String) == kode);
       if (!found) {
@@ -121,14 +122,34 @@ class ReportService {
   }
 
   Future<File> generatePdf(DateTime date, Map<String, String> absentOverrides) async {
+    final bytes = await generatePdfBytes(date, absentOverrides);
+    final dir = await getApplicationDocumentsDirectory();
+    final filePath = p.join(dir.path, 'absensi_${_fmtDate(date)}.pdf');
+    final file = File(filePath);
+    await file.writeAsBytes(bytes);
+    return file;
+  }
+
+  Future<Uint8List> generatePdfBytes(DateTime date, Map<String, String> absentOverrides) async {
     final rows = await buildReportForDate(date, absentOverrides);
     final pdf = pw.Document();
 
+    // Add a header and styled table
     pdf.addPage(
       pw.MultiPage(
         pageFormat: pw.PageFormat.a4,
         build: (context) => [
-          pw.Header(level: 0, child: pw.Text('Laporan Absensi - ${_fmtDate(date)}')),
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            children: [
+              pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: [
+                pw.Text('Laporan Absensi', style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                pw.Text('Tanggal: ${DateFormat('yyyy-MM-dd').format(date)}', style: pw.TextStyle(fontSize: 12)),
+              ]),
+              pw.Container(child: pw.Text('Absensi Digital', style: pw.TextStyle(fontSize: 12)))
+            ],
+          ),
+          pw.SizedBox(height: 12),
           pw.Table.fromTextArray(
             headers: ['No', 'Nama Lengkap', 'Nama Alias', 'Kode Pihak', 'Status', 'Waktu Hadir'],
             data: List<List<String>>.generate(rows.length, (i) {
@@ -142,17 +163,17 @@ class ReportService {
                 r.tglHadir ?? '',
               ];
             }),
+            headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            cellAlignment: pw.Alignment.centerLeft,
+            headerDecoration: pw.BoxDecoration(color: PdfColor.fromInt(0xffeeeeee)),
+            cellPadding: const pw.EdgeInsets.all(6),
           ),
         ],
       ),
     );
 
     final bytes = await pdf.save();
-    final dir = await getApplicationDocumentsDirectory();
-    final filePath = p.join(dir.path, 'absensi_${_fmtDate(date)}.pdf');
-    final file = File(filePath);
-    await file.writeAsBytes(bytes);
-    return file;
+    return bytes;
   }
 
   Future<void> shareFile(File file) async {
