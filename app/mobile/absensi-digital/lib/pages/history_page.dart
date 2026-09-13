@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../data/database.dart';
-import '../models/absensi.dart';
 import 'package:intl/intl.dart';
 
 class HistoryPage extends StatefulWidget {
@@ -12,7 +11,7 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   DateTime _selectedDate = DateTime.now();
-  List<Absensi> _items = [];
+  List<Map<String, dynamic>> _items = [];
   bool _loading = true;
 
   @override
@@ -25,7 +24,7 @@ class _HistoryPageState extends State<HistoryPage> {
     setState(() => _loading = true);
     final rows = await DatabaseHelper.instance.getAbsensiByDate(_selectedDate);
     setState(() {
-      _items = rows.map((r) => Absensi.fromMap(r)).toList();
+      _items = rows;
       _loading = false;
     });
   }
@@ -58,22 +57,39 @@ class _HistoryPageState extends State<HistoryPage> {
           ListTile(
             title: const Text('Tanggal'),
             subtitle: Text(label),
-            trailing: IconButton(icon: const Icon(Icons.calendar_today), onPressed: _pickDate),
+            trailing: IconButton(
+                icon: const Icon(Icons.calendar_today), onPressed: _pickDate),
           ),
           const Divider(),
           _loading
               ? const Center(child: CircularProgressIndicator())
               : Expanded(
                   child: _items.isEmpty
-                      ? const Center(child: Text('Belum ada absensi untuk tanggal ini.'))
+                      ? const Center(
+                          child: Text('Belum ada absensi untuk tanggal ini.'))
                       : ListView.builder(
                           itemCount: _items.length,
                           itemBuilder: (_, i) {
-                            final a = _items[i];
+                            final item = _items[i];
+                            final nama = item['nama'] as String? ?? '';
+                            final kode = item['kode_unik'] as String;
                             return ListTile(
-                              title: Text(a.kodePihak),
-                              subtitle: Text(DateFormat('HH:mm:ss').format(a.tglHadir)),
-                              trailing: IconButton(icon: const Icon(Icons.delete), onPressed: () => _delete(a.idAbsensi!)),
+                              leading: CircleAvatar(
+                                backgroundColor: Theme.of(context)
+                                    .colorScheme
+                                    .primaryContainer,
+                                child: Text(
+                                    nama.isEmpty ? '?' : nama.substring(0, 1)),
+                              ),
+                              title: Text(
+                                  nama.isEmpty ? 'Pihak tidak dikenal' : nama),
+                              subtitle: Text(
+                                  '$kode  |  ${DateFormat('HH:mm:ss').format(DateTime.parse(item['tgl_hadir'] as String))}'),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () =>
+                                    _delete(item['id_absensi'] as int),
+                              ),
                             );
                           },
                         ),

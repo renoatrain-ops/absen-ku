@@ -1,25 +1,37 @@
 class Pihak {
-  final int? idPihak;
-  final String namaLengkap;
-  final String namaAlias;
-  final String kodePihak;
-  final bool flagAktif;
+  final int id;
+  final String idPihak;
+  final String tipe;
+  final String nama;
+  final String kodeUnik;
+  final String kodeInduk;
+  final String flag;
+  final String grade;
+  final int aktif;
 
-  Pihak({this.idPihak, required this.namaLengkap, required this.namaAlias, required this.kodePihak, required this.flagAktif});
+  Pihak({required this.id, required this.idPihak, required this.tipe, required this.nama, required this.kodeUnik, required this.kodeInduk, required this.flag, required this.grade, required this.aktif});
 
   factory Pihak.fromMap(Map<String, dynamic> map) => Pihak(
-        idPihak: map['id_pihak'] as int?,
-        namaLengkap: map['nama_lengkap'] as String? ?? '',
-        namaAlias: map['nama_alias'] as String? ?? '',
-        kodePihak: map['kode_pihak'] as String,
-        flagAktif: (map['flag_aktif'] as int) == 1,
+        id: map['id'] as int,
+        idPihak: map['id_pihak'] as String,
+        tipe: map['tipe'] as String,
+        nama: map['nama'] as String,
+        kodeUnik: map['kode_unik'] as String,
+        kodeInduk: map['kode_induk'] as String,
+        flag: map['flag'] as String,
+        grade: map['grade'] as String,
+        aktif: map['aktif'] as int,
       );
 
   Map<String, dynamic> toMap() => {
+        'id': id,
         'id_pihak': idPihak,
-        'nama_lengkap': namaLengkap,
-        'nama_alias': namaAlias,
-        'kode_pihak': kodePihak,
-        'flag_aktif': flagAktif ? 1 : 0,
+        'tipe': tipe,
+        'nama': nama,
+        'kode_unik': kodeUnik,
+        'kode_induk': kodeInduk,
+        'flag': flag,
+        'grade': grade,
+        'aktif': aktif,
       };
 }

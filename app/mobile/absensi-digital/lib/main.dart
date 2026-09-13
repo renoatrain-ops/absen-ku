@@ -14,7 +14,24 @@ class AbsensiApp extends StatelessWidget {
     return MaterialApp(
       title: 'Absensi Digital',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xff197c8c),
+          brightness: Brightness.light,
+        ),
+        scaffoldBackgroundColor: const Color(0xfff3f8f8),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xffd9eff0),
+          foregroundColor: Color(0xff123e46),
+          elevation: 0,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(0, 48),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          ),
+        ),
       ),
       home: const HomePage(),
     );

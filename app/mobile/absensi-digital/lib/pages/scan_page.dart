@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../data/database.dart';
-import '../models/pihak.dart';
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
@@ -28,7 +27,7 @@ class _ScanPageState extends State<ScanPage> {
     final pihakRow = await DatabaseHelper.instance.getPihakByKode(kodePihak);
 
     if (pihakRow == null) {
-      // masukkan sebagai pihak baru dengan flag_aktif = 0
+      // Masukkan sebagai pihak baru yang belum aktif.
       await DatabaseHelper.instance.insertPihakIfNotExists(kodePihak);
     }
 
@@ -91,6 +90,11 @@ class _ScanPageState extends State<ScanPage> {
         title: const Text('Scan QR'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.cameraswitch_outlined),
+            tooltip: 'Ganti kamera',
+            onPressed: () => cameraController.switchCamera(),
+          ),
+          IconButton(
             icon: const Icon(Icons.flash_on),
             onPressed: () => cameraController.toggleTorch(),
           ),
@@ -111,7 +115,8 @@ class _ScanPageState extends State<ScanPage> {
                 color: Colors.black54,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text('Arahkan QR ke kamera depan', style: TextStyle(color: Colors.white)),
+              child: const Text('Arahkan QR ke kamera',
+                  style: TextStyle(color: Colors.white)),
             ),
           ),
         ],

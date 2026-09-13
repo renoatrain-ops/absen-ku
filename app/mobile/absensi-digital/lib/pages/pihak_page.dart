@@ -28,10 +28,13 @@ class _PihakPageState extends State<PihakPage> {
   }
 
   Future<void> _showEditDialog({Map<String, dynamic>? item}) async {
-    final namaCtl = TextEditingController(text: item?['nama_lengkap'] as String? ?? '');
-    final aliasCtl = TextEditingController(text: item?['nama_alias'] as String? ?? '');
-    final kodeCtl = TextEditingController(text: item?['kode_pihak'] as String? ?? '');
-    bool aktif = (item?['flag_aktif'] as int? ?? 0) == 1;
+    final namaCtl = TextEditingController(text: item?['nama'] as String? ?? '');
+    final tipeCtl = TextEditingController(text: item?['tipe'] as String? ?? '');
+    final kodeCtl = TextEditingController(text: item?['kode_unik'] as String? ?? '');
+    final indukCtl = TextEditingController(text: item?['kode_induk'] as String? ?? '');
+    final flagCtl = TextEditingController(text: item?['flag'] as String? ?? '');
+    final gradeCtl = TextEditingController(text: item?['grade'] as String? ?? '');
+    bool aktif = (item?['aktif'] as int? ?? 0) == 1;
 
     final res = await showDialog<bool>(
       context: context,
@@ -40,9 +43,12 @@ class _PihakPageState extends State<PihakPage> {
         content: SingleChildScrollView(
           child: Column(
             children: [
-              TextField(controller: namaCtl, decoration: const InputDecoration(labelText: 'Nama Lengkap')),
-              TextField(controller: aliasCtl, decoration: const InputDecoration(labelText: 'Nama Alias')),
-              TextField(controller: kodeCtl, decoration: const InputDecoration(labelText: 'Kode Pihak')),
+              TextField(controller: namaCtl, decoration: const InputDecoration(labelText: 'Nama')),
+              TextField(controller: tipeCtl, decoration: const InputDecoration(labelText: 'Tipe')),
+              TextField(controller: kodeCtl, decoration: const InputDecoration(labelText: 'Kode Unik')),
+              TextField(controller: indukCtl, decoration: const InputDecoration(labelText: 'Kode Induk')),
+              TextField(controller: flagCtl, decoration: const InputDecoration(labelText: 'Flag')),
+              TextField(controller: gradeCtl, decoration: const InputDecoration(labelText: 'Grade')),
               Row(
                 children: [
                   const Text('Aktif'),
@@ -57,15 +63,20 @@ class _PihakPageState extends State<PihakPage> {
           ElevatedButton(
             onPressed: () async {
               final map = {
-                'nama_lengkap': namaCtl.text,
-                'nama_alias': aliasCtl.text,
-                'kode_pihak': kodeCtl.text,
-                'flag_aktif': aktif ? 1 : 0,
+                'id': item?['id'] ?? DateTime.now().millisecondsSinceEpoch,
+                'id_pihak': item?['id_pihak'] ?? kodeCtl.text,
+                'tipe': tipeCtl.text,
+                'nama': namaCtl.text,
+                'kode_unik': kodeCtl.text,
+                'kode_induk': indukCtl.text,
+                'flag': flagCtl.text,
+                'grade': gradeCtl.text,
+                'aktif': aktif ? 1 : 0,
               };
               if (item == null) {
                 await DatabaseHelper.instance.insertPihak(map);
               } else {
-                await DatabaseHelper.instance.updatePihak(item['id_pihak'] as int, map);
+                await DatabaseHelper.instance.updatePihak(item['id'] as int, map);
               }
               Navigator.of(context).pop(true);
             },
@@ -98,13 +109,13 @@ class _PihakPageState extends State<PihakPage> {
               itemBuilder: (_, i) {
                 final p = _items[i];
                 return ListTile(
-                  title: Text(p['nama_lengkap'] as String? ?? ''),
-                  subtitle: Text(p['kode_pihak'] as String? ?? ''),
+                  title: Text(p['nama'] as String? ?? ''),
+                  subtitle: Text('${p['id_pihak']} - ${p['kode_unik']}'),
                   trailing: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       IconButton(icon: const Icon(Icons.edit), onPressed: () => _showEditDialog(item: p)),
-                      IconButton(icon: const Icon(Icons.delete), onPressed: () => _delete(p['id_pihak'] as int)),
+                      IconButton(icon: const Icon(Icons.delete), onPressed: () => _delete(p['id'] as int)),
                     ],
                   ),
                 );

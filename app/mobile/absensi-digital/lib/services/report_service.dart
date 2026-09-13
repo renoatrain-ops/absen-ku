@@ -11,20 +11,14 @@ import 'package:share_plus/share_plus.dart';
 import '../data/database.dart';
 
 class ReportRow {
-  final int? idPihak;
-  final String namaLengkap;
-  final String namaAlias;
-  final String kodePihak;
+  final Map<String, dynamic> pihak;
   final String status; // hadir, ijin, alpha, unknown
   final String? tglHadir; // ISO if hadir
 
-  ReportRow({this.idPihak, required this.namaLengkap, required this.namaAlias, required this.kodePihak, required this.status, this.tglHadir});
+  ReportRow({required this.pihak, required this.status, this.tglHadir});
 
   Map<String, dynamic> toJson() => {
-        'id_pihak': idPihak,
-        'nama_lengkap': namaLengkap,
-        'nama_alias': namaAlias,
-        'kode_pihak': kodePihak,
+        ...pihak,
         'status': status,
         'tgl_hadir': tglHadir,
       };
@@ -38,12 +32,12 @@ class ReportService {
     final dateStr = DateFormat('yyyy-MM-dd').format(date);
     final absensiRows = await _db.database.then((db) => db.query('absensi'));
 
-    // Map kode_pihak -> latest tgl_hadir for that date
+    // Map kode_unik -> latest tgl_hadir for that date.
     final Map<String, String> hadirMap = {};
     for (final a in absensiRows) {
       final tgl = a['tgl_hadir'] as String;
       if (tgl.startsWith(dateStr)) {
-        final kode = a['kode_pihak'] as String;
+        final kode = a['kode_unik'] as String;
         // keep first found or overwrite with newest
         hadirMap[kode] = tgl;
       }
@@ -53,14 +47,11 @@ class ReportService {
 
     // Include known pihak
     for (final p in allPihakRows) {
-      final kode = p['kode_pihak'] as String;
+      final kode = p['kode_unik'] as String;
       final isHadir = hadirMap.containsKey(kode);
       final status = isHadir ? 'hadir' : (absentOverrides[kode] ?? 'alpha');
       rows.add(ReportRow(
-        idPihak: p['id_pihak'] as int?,
-        namaLengkap: p['nama_lengkap'] as String? ?? '',
-        namaAlias: p['nama_alias'] as String? ?? '',
-        kodePihak: kode,
+        pihak: p,
         status: status,
         tglHadir: hadirMap[kode],
       ));
@@ -68,21 +59,27 @@ class ReportService {
 
     // Include unknown hadir (kode that in absensi but not in pihak)
     for (final kode in hadirMap.keys) {
-      final found = allPihakRows.any((p) => (p['kode_pihak'] as String) == kode);
+      final found = allPihakRows.any((p) => (p['kode_unik'] as String) == kode);
       if (!found) {
         rows.add(ReportRow(
-          idPihak: null,
-          namaLengkap: '',
-          namaAlias: '',
-          kodePihak: kode,
+          pihak: {
+            'id': 0,
+            'id_pihak': kode,
+            'tipe': 'UNKNOWN',
+            'nama': '',
+            'kode_unik': kode,
+            'kode_induk': '',
+            'flag': '',
+            'grade': '',
+            'aktif': 0,
+          },
           status: 'hadir (unknown)',
           tglHadir: hadirMap[kode],
         ));
       }
     }
 
-    // sort by nama_alias or kode
-    rows.sort((a, b) => a.namaAlias.compareTo(b.namaAlias));
+    rows.sort((a, b) => (a.pihak['nama'] as String).compareTo(b.pihak['nama'] as String));
     return rows;
   }
 
@@ -100,15 +97,20 @@ class ReportService {
 
   Future<File> generateCsv(DateTime date, Map<String, String> absentOverrides) async {
     final rows = await buildReportForDate(date, absentOverrides);
-    final header = ['id_pihak', 'nama_lengkap', 'nama_alias', 'kode_pihak', 'status', 'tgl_hadir'];
+    final header = ['id', 'id_pihak', 'tipe', 'nama', 'kode_unik', 'kode_induk', 'flag', 'grade', 'aktif', 'status', 'tgl_hadir'];
     final sb = StringBuffer();
     sb.writeln(header.join(','));
     for (final r in rows) {
       final line = [
-        r.idPihak?.toString() ?? '',
-        _escapeCsv(r.namaLengkap),
-        _escapeCsv(r.namaAlias),
-        _escapeCsv(r.kodePihak),
+        r.pihak['id'].toString(),
+        _escapeCsv(r.pihak['id_pihak'] as String),
+        _escapeCsv(r.pihak['tipe'] as String),
+        _escapeCsv(r.pihak['nama'] as String),
+        _escapeCsv(r.pihak['kode_unik'] as String),
+        _escapeCsv(r.pihak['kode_induk'] as String),
+        _escapeCsv(r.pihak['flag'] as String),
+        _escapeCsv(r.pihak['grade'] as String),
+        r.pihak['aktif'].toString(),
         _escapeCsv(r.status),
         r.tglHadir ?? '',
       ].join(',');
@@ -152,14 +154,15 @@ class ReportService {
           ),
           pw.SizedBox(height: 12),
           pw.Table.fromTextArray(
-            headers: ['No', 'Nama Lengkap', 'Nama Alias', 'Kode Pihak', 'Status', 'Waktu Hadir'],
+            headers: ['No', 'ID Pihak', 'Tipe', 'Nama', 'Kode Unik', 'Status', 'Waktu Hadir'],
             data: List<List<String>>.generate(rows.length, (i) {
               final r = rows[i];
               return [
                 (i + 1).toString(),
-                r.namaLengkap,
-                r.namaAlias,
-                r.kodePihak,
+                r.pihak['id_pihak'] as String,
+                r.pihak['tipe'] as String,
+                r.pihak['nama'] as String,
+                r.pihak['kode_unik'] as String,
                 r.status,
                 r.tglHadir ?? '',
               ];
