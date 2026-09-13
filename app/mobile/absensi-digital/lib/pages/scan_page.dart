@@ -100,7 +100,6 @@ class _ScanPageState extends State<ScanPage> {
         children: [
           MobileScanner(
             controller: cameraController,
-            allowDuplicates: false,
             onDetect: _onDetect,
           ),
           Align(

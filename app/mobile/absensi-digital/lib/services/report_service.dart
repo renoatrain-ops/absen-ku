@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
 
@@ -137,7 +138,7 @@ class ReportService {
     // Add a header and styled table
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: pw.PageFormat.a4,
+        pageFormat: PdfPageFormat.a4,
         build: (context) => [
           pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
