@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../data/database.dart';
+import '../services/pihak_qr_service.dart';
 
 class PihakPage extends StatefulWidget {
   const PihakPage({super.key});
@@ -11,6 +12,7 @@ class PihakPage extends StatefulWidget {
 class _PihakPageState extends State<PihakPage> {
   List<Map<String, dynamic>> _items = [];
   bool _loading = true;
+  final PihakQrService _qrService = PihakQrService();
 
   @override
   void initState() {
@@ -97,10 +99,32 @@ class _PihakPageState extends State<PihakPage> {
     }
   }
 
+  Future<void> _generateQr() async {
+    if (_items.isEmpty) return;
+    try {
+      final file = await _qrService.generatePdf(_items);
+      await _qrService.shareFile(file);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal membuat QR: $error')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Manajemen Pihak')),
+      appBar: AppBar(
+        title: const Text('Manajemen Pihak'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_2),
+            tooltip: 'Buat QR semua pihak',
+            onPressed: _loading ? null : _generateQr,
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(onPressed: () => _showEditDialog(), child: const Icon(Icons.add)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())

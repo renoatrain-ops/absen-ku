@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'dart:convert';
 import '../data/database.dart';
 
 class ScanPage extends StatefulWidget {
@@ -17,8 +18,16 @@ class _ScanPageState extends State<ScanPage> {
   bool _isProcessing = false;
 
   Future<void> _handleScan(String code) async {
-    // QR hanya berisi kode pihak
-    final kodePihak = code.trim();
+    final rawCode = code.trim();
+    var kodePihak = rawCode;
+    var namaPihak = '';
+    var tandaPihak = '';
+    try {
+      final payload = jsonDecode(rawCode) as Map<String, dynamic>;
+      kodePihak = payload['kode_unik'] as String? ?? rawCode;
+      namaPihak = payload['nama'] as String? ?? '';
+      tandaPihak = payload['jenis_kelamin'] as String? ?? '';
+    } catch (_) {}
 
     // Simpan absensi
     final absensiId = await DatabaseHelper.instance.insertAbsensi(kodePihak);
@@ -38,7 +47,7 @@ class _ScanPageState extends State<ScanPage> {
       builder: (context) => AlertDialog(
         title: const Text('Absensi Tersimpan'),
         content: Text(
-            'ID Absensi: $absensiId\nKode Pihak: $kodePihak\nDikenal di tabel pihak: ${known ? 'Ya' : 'Tidak (ditambahkan sebagai non-aktif)'}'),
+          'ID Absensi: $absensiId\nNama: ${pihakRow?['nama'] ?? namaPihak}\nKode Pihak: $kodePihak\nTanda: ${pihakRow?['flag'] ?? tandaPihak}\nDikenal di tabel pihak: ${known ? 'Ya' : 'Tidak (ditambahkan sebagai non-aktif)'}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
